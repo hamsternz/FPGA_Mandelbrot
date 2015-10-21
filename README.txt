@@ -1,0 +1,3 @@
+Mandelbrot fractal view for Nexys Video and Genesys2 FPGA dev boards.
+
+More information to come...
