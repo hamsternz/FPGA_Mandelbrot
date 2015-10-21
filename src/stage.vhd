@@ -36,7 +36,8 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity stage is
     generic (
-        phase_len : integer 
+        phase_len     : integer;
+        use_lut_mults : integer 
     );
       port (
         clk          : in std_logic;
@@ -201,13 +202,21 @@ clk_proc: process(clk)
 
            a_abs          <= a_abs(latency-1)          & a_abs(latency-1 downto 1);
            a_squared      <= a_squared(latency-1)      & a_squared(latency-1 downto 1);
-           a_squared_hh(3 downto 0) <= a_squared_hh(4 downto 1);
+           if use_lut_mults > 0 then 
+               a_squared_hh(3 downto 0) <= a_squared_hh(4 downto 1);
+           else
+               a_squared_hh(4 downto 0) <= a_squared_hh(5 downto 1);
+           end if;
            a_squared_hl(4 downto 0) <= a_squared_hl(5 downto 1);
            a_squared_ll(4 downto 0) <= a_squared_ll(5 downto 1);
 
            b_abs          <= b_abs(latency-1)          & b_abs(latency-1 downto 1);
            b_squared      <= b_squared(latency-1)      & b_squared(latency-1 downto 1);
-           b_squared_hh(3 downto 0) <= b_squared_hh(4 downto 1);
+           if use_lut_mults > 1 then 
+              b_squared_hh(3 downto 0) <= b_squared_hh(4 downto 1);
+           else
+              b_squared_hh(4 downto 0) <= b_squared_hh(5 downto 1);
+           end if;
            b_squared_hl(4 downto 0) <= b_squared_hl(5 downto 1);
            b_squared_ll(4 downto 0) <= b_squared_ll(5 downto 1);
            magnitude      <= magnitude(latency-1)      & magnitude(latency-1 downto 1);
@@ -306,14 +315,73 @@ clk_proc: process(clk)
         end if;
     end process;
     
+
+------------------------------------------------
+-- When two MULTs are implemented in LUTs
+------------------------------------------------
+g_hh2: if use_lut_mults > 1 generate
     
-m_a_hh: mult_u17_u17_l5_lut PORT MAP (
+m_a_hh2: mult_u17_u17_l5_lut PORT MAP (
         clk => clk,
         a => std_logic_vector(a_abs(9)(33 downto 17)),
         b => std_logic_vector(a_abs(9)(33 downto 17)),
         p => a_s_hh
     );
     a_squared_hh(4) <= unsigned(a_s_hh);
+
+m_b_hh2: mult_u17_u17_l5_lut PORT MAP (
+            clk => clk,
+            a => std_logic_vector(b_abs(9)(33 downto 17)),
+            b => std_logic_vector(b_abs(9)(33 downto 17)),
+            p => b_s_hh
+    );
+    b_squared_hh(4) <= unsigned(b_s_hh);
+end generate;
+
+------------------------------------------------
+-- When one MULTs are implemented in LUTs
+------------------------------------------------
+g_hh1: if use_lut_mults = 1 generate
+    
+m_a_hh1: mult_u17_u17_l5_lut PORT MAP (
+        clk => clk,
+        a => std_logic_vector(a_abs(9)(33 downto 17)),
+        b => std_logic_vector(a_abs(9)(33 downto 17)),
+        p => a_s_hh
+    );
+    a_squared_hh(4) <= unsigned(a_s_hh);
+
+m_b_hh1: mult_u17_u17_l4 PORT MAP (
+            clk => clk,
+            a => std_logic_vector(b_abs(9)(33 downto 17)),
+            b => std_logic_vector(b_abs(9)(33 downto 17)),
+            p => b_s_hh
+    );
+    b_squared_hh(5) <= unsigned(b_s_hh);
+end generate;
+
+------------------------------------------------
+-- When no MULTs are implemented in LUTs
+------------------------------------------------
+g_hh0: if use_lut_mults = 0 generate
+    
+m_a_hh0: mult_u17_u17_l4 PORT MAP (
+        clk => clk,
+        a => std_logic_vector(a_abs(9)(33 downto 17)),
+        b => std_logic_vector(a_abs(9)(33 downto 17)),
+        p => a_s_hh
+    );
+    a_squared_hh(5) <= unsigned(a_s_hh);
+
+m_b_hh0: mult_u17_u17_l4 PORT MAP (
+            clk => clk,
+            a => std_logic_vector(b_abs(9)(33 downto 17)),
+            b => std_logic_vector(b_abs(9)(33 downto 17)),
+            p => b_s_hh
+    );
+    b_squared_hh(5) <= unsigned(b_s_hh);
+end generate;
+
 
 m_a_hl: mult_u17_u17_l4 PORT MAP (
         clk => clk,
@@ -331,13 +399,6 @@ m_a_ll: mult_u17_u17_l4 PORT MAP (
     );
     a_squared_ll(5) <= unsigned(a_s_ll);
 
-m_b_hh: mult_u17_u17_l5_lut PORT MAP (
-        clk => clk,
-        a => std_logic_vector(b_abs(9)(33 downto 17)),
-        b => std_logic_vector(b_abs(9)(33 downto 17)),
-        p => b_s_hh
-    );
-    b_squared_hh(4) <= unsigned(b_s_hh);
 m_b_hl: mult_u17_u17_l4 PORT MAP (
         clk => clk,
         a => std_logic_vector(b_abs(9)(33 downto 17)),

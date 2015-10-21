@@ -56,12 +56,12 @@ entity top_level is
 -------------------------------------
 -- Genesys2 has differnetal clock
 -------------------------------------      
-        clk100_p    : in STD_LOGIC;
-        clk100_n    : in STD_LOGIC;
+        clk200_p    : in STD_LOGIC;
+        clk200_n    : in STD_LOGIC;
 -------------------------------------
 -- Nexys Video has single ended clock  
 -------------------------------------      
---        clk100    : in STD_LOGIC;
+        clk100      : in STD_LOGIC;
 
         
         btnU      : in STD_LOGIC;
@@ -83,8 +83,23 @@ entity top_level is
 end top_level;
 
 architecture Behavioral of top_level is
-    constant stages           : integer :=  85;
+    --------------------------------------------------------
+    --- One of these has to be set to 1, the others to zero
+    --------------------------------------------------------
+    constant is_genesys2      : integer :=  1;
+    constant is_nexys_video   : integer :=  0;
+    --------------------------------------------------------
+    --------------------------------------------------------
+    constant stages_nexys     : integer :=  70;
+    constant stages_genesys2  : integer :=  85;
+
+    constant lut_mults_nexys     : integer :=  0;
+    constant lut_mults_genesys2  : integer :=  2;
+
     constant clocks_per_pixel : integer :=  3;
+    
+    constant stages    : integer := is_genesys2 * stages_genesys2 + is_nexys_video * stages_nexys;
+    constant lut_mults : integer := is_genesys2 * lut_mults_genesys2 + is_nexys_video * lut_mults_nexys;
     
     signal clk_calc      : std_logic;
     signal clk_pixel_x1  : std_logic;
@@ -95,6 +110,16 @@ architecture Behavioral of top_level is
     signal vsync : std_logic := '0';
     signal field         : std_logic;
     signal interlaced    : std_logic;
+
+    component mmcm_wrapper is
+        generic ( div_to_25MHz  : integer );
+        Port (
+            clk_in        : in  std_logic;
+            locked        : out std_logic;
+            clk_calc      : out std_logic;
+            clk_pixel_x1  : out std_logic;
+            clk_pixel_x5  : out std_logic);
+    end component;
 
     component vga_gen_720p is
         port (
@@ -183,7 +208,8 @@ architecture Behavioral of top_level is
     
     component stage is 
     generic (
-        phase_len : integer 
+        phase_len     : integer;
+        use_lut_mults : integer 
     );
     port (
         clk    : std_logic;
@@ -252,82 +278,50 @@ architecture Behavioral of top_level is
 
     signal locked        : std_logic;
     signal clkfb         : std_logic;
-    ------------------------
-    -- For Genesys2
-    ------------------------
-    signal clk100        : std_logic;
+
+    signal mmcm_clk_in   : std_logic;
 begin
     reset <= not locked;
-    ------------------------------
-    -- For the Genesys2
-    ------------------------------
+
+g0: if is_genesys2 = 1 generate
+    
+-----------------------------------------------
+-- For the Genesys2 - 200MHz differential clock
+-----------------------------------------------
 clk100_buff: ibufds port map
     (
-        i => clk100_p,
-        ib => clk100_n,
-        o => clk100
+        i => clk200_p,
+        ib => clk200_n,
+        o => mmcm_clk_in
     );
-MMCME2_BASE_inst : MMCME2_BASE
-   generic map (
-      BANDWIDTH => "OPTIMIZED",  -- Jitter programming (OPTIMIZED, HIGH, LOW)
-      DIVCLK_DIVIDE   => 8,        -- Master division value (1-106)
-      CLKFBOUT_MULT_F => 44.5,    -- Multiply value for all CLKOUT (2.000-64.000).
-      CLKFBOUT_PHASE => 0.0,     -- Phase offset in degrees of CLKFB (-360.000-360.000).
-      CLKIN1_PERIOD => 10.0,      -- Input clock period in ns to ps resolution (i.e. 33.333 is 30 MHz).
-      -- CLKOUT0_DIVIDE - CLKOUT6_DIVIDE: Divide amount for each CLKOUT (1-128)
-      CLKOUT0_DIVIDE_F => 5.0,   -- Divide amount for CLKOUT0 (1.000-128.000).
-      CLKOUT1_DIVIDE   => 15,
-      CLKOUT2_DIVIDE   => 3,
-      CLKOUT3_DIVIDE   => 1,
-      CLKOUT4_DIVIDE   => 1,
-      CLKOUT5_DIVIDE   => 1,
-      CLKOUT6_DIVIDE   => 1,
-      -- CLKOUT0_DUTY_CYCLE - CLKOUT6_DUTY_CYCLE: Duty cycle for each CLKOUT (0.01-0.99).
-      CLKOUT0_DUTY_CYCLE => 0.5,
-      CLKOUT1_DUTY_CYCLE => 0.5,
-      CLKOUT2_DUTY_CYCLE => 0.5,
-      CLKOUT3_DUTY_CYCLE => 0.5,
-      CLKOUT4_DUTY_CYCLE => 0.5,
-      CLKOUT5_DUTY_CYCLE => 0.5,
-      CLKOUT6_DUTY_CYCLE => 0.5,
-      -- CLKOUT0_PHASE - CLKOUT6_PHASE: Phase offset for each CLKOUT (-360.000-360.000).
-      CLKOUT0_PHASE => 0.0,
-      CLKOUT1_PHASE => 0.0,
-      CLKOUT2_PHASE => 0.0,
-      CLKOUT3_PHASE => 0.0,
-      CLKOUT4_PHASE => 0.0,
-      CLKOUT5_PHASE => 0.0,
-      CLKOUT6_PHASE => 0.0,
-      CLKOUT4_CASCADE => FALSE,  -- Cascade CLKOUT4 counter with CLKOUT6 (FALSE, TRUE)
-      REF_JITTER1 => 0.0,        -- Reference input jitter in UI (0.000-0.999).
-      STARTUP_WAIT => FALSE      -- Delays DONE until MMCM is locked (FALSE, TRUE)
-   )
-   port map (
-      -- Clock Outputs: 1-bit (each) output: User configurable clock outputs
-      CLKOUT0   => clk_calc,     -- 1-bit output: CLKOUT0
-      CLKOUT0B  => open,         -- 1-bit output: Inverted CLKOUT0
-      CLKOUT1   => clk_pixel_x1, -- 1-bit output: CLKOUT1
-      CLKOUT1B  => open,         -- 1-bit output: Inverted CLKOUT1
-      CLKOUT2   => clk_pixel_x5, -- 1-bit output: CLKOUT2
-      CLKOUT2B  => open,         -- 1-bit output: Inverted CLKOUT2
-      CLKOUT3   => open,         -- 1-bit output: CLKOUT3
-      CLKOUT3B  => open,         -- 1-bit output: Inverted CLKOUT3
-      CLKOUT4   => open,         -- 1-bit output: CLKOUT4
-      CLKOUT5   => open,         -- 1-bit output: CLKOUT5
-      CLKOUT6   => open,         -- 1-bit output: CLKOUT6
-      -- Feedback Clocks: 1-bit (each) output: Clock feedback ports
-      CLKFBOUT  => clkfb,  -- 1-bit output: Feedback clock
-      CLKFBOUTB => open,   -- 1-bit output: Inverted CLKFBOUT
-      -- Status Ports: 1-bit (each) output: MMCM status ports
-      LOCKED    => locked,   -- 1-bit output: LOCK
-      -- Clock Inputs: 1-bit (each) input: Clock input
-      CLKIN1    => clk100, -- 1-bit input: Clock
-      -- Control Ports: 1-bit (each) input: MMCM control ports
-      PWRDWN    => '0',    -- 1-bit input: Power-down
-      RST       => '0',    -- 1-bit input: Reset
-      -- Feedback Clocks: 1-bit (each) input: Clock feedback ports
-      CLKFBIN   => clkfb   -- 1-bit input: Feedback clock
-   );
+
+i_clk_gen0 : mmcm_wrapper generic map (
+       div_to_25MHz => 8  -- For a 200Mhz Clk
+    ) port map (
+      clk_in       => mmcm_clk_in,
+      locked       => locked,
+      clk_calc     => clk_calc,
+      clk_pixel_x1 => clk_pixel_x1,
+      clk_pixel_x5 => clk_pixel_x5
+);
+end generate;
+
+---------------------------------------------
+-- For Nexys Video - single ended 100MHz clk
+---------------------------------------------
+g1: if is_nexys_video = 1 generate
+    mmcm_clk_in <= clk100;
+
+i_clk_gen1 : mmcm_wrapper generic map (
+       div_to_25MHz => 4  -- For a 200Mhz Clk
+    ) port map (
+      clk_in       => mmcm_clk_in,
+      locked       => locked,
+      clk_calc     => clk_calc,
+      clk_pixel_x1 => clk_pixel_x1,
+      clk_pixel_x5 => clk_pixel_x5
+);
+end generate;
 
 i_ui: user_interface  port map (
            clk   => clk_pixel_x1,
@@ -377,9 +371,10 @@ i_generate_constants: generate_constants port map (
     -- set starting colour
     overflow(0)   <= '0';  
 
-g1: for i in 1 to stages generate
+g_stages: for i in 1 to stages generate
 i_stage_1: stage generic map (
-            phase_len => clocks_per_pixel
+            phase_len     => clocks_per_pixel,
+            use_lut_mults => lut_mults
         ) port map (
             clk        => clk_calc,
             -- Inputs
@@ -400,6 +395,7 @@ i_stage_1: stage generic map (
             sync_out     => sync(i)
         );
 end generate;
+
     
 i_vga_output: vga_output Port map ( 
             clk => clk_pixel_x1,
