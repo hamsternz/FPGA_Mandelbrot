@@ -288,7 +288,7 @@ g0: if is_genesys2 = 1 generate
 -----------------------------------------------
 -- For the Genesys2 - 200MHz differential clock
 -----------------------------------------------
-clk100_buff: ibufds port map
+clk200_buff: ibufds port map
     (
         i => clk200_p,
         ib => clk200_n,

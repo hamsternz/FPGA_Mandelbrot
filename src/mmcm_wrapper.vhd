@@ -30,7 +30,10 @@ entity mmcm_wrapper is
 end mmcm_wrapper;
 
 architecture Behavioral of mmcm_wrapper is
-    signal clkfb         : std_logic;
+    signal clkfb           : std_logic;
+    signal clk_calc_u      : std_logic;
+    signal clk_pixel_x1_u  : std_logic;
+    signal clk_pixel_x5_u  : std_logic;
 begin
 
 MMCME2_BASE_inst : MMCME2_BASE
@@ -70,11 +73,11 @@ MMCME2_BASE_inst : MMCME2_BASE
    )
    port map (
       -- Clock Outputs: 1-bit (each) output: User configurable clock outputs
-      CLKOUT0   => clk_calc,     -- 1-bit output: CLKOUT0
+      CLKOUT0   => clk_calc_u,   -- 1-bit output: CLKOUT0
       CLKOUT0B  => open,         -- 1-bit output: Inverted CLKOUT0
-      CLKOUT1   => clk_pixel_x1, -- 1-bit output: CLKOUT1
+      CLKOUT1   => clk_pixel_x1_u, -- 1-bit output: CLKOUT1
       CLKOUT1B  => open,         -- 1-bit output: Inverted CLKOUT1
-      CLKOUT2   => clk_pixel_x5, -- 1-bit output: CLKOUT2
+      CLKOUT2   => clk_pixel_x5_u, -- 1-bit output: CLKOUT2
       CLKOUT2B  => open,         -- 1-bit output: Inverted CLKOUT2
       CLKOUT3   => open,         -- 1-bit output: CLKOUT3
       CLKOUT3B  => open,         -- 1-bit output: Inverted CLKOUT3
@@ -95,4 +98,16 @@ MMCME2_BASE_inst : MMCME2_BASE
       CLKFBIN   => clkfb   -- 1-bit input: Feedback clock
    );
 
+clk_calc_bufg : bufg PORT MAP (
+    i => clk_calc_u,
+    o => clk_calc);
+
+clk_pixel_x1_bufg : bufg PORT MAP (
+    i => clk_pixel_x1_u,
+    o => clk_pixel_x1);
+
+clk_pixel_x5_bufg : bufg PORT MAP (
+        i => clk_pixel_x5_u,
+        o => clk_pixel_x5);
+    
 end Behavioral;

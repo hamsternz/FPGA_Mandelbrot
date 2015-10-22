@@ -1,8 +1,8 @@
 ########################################################
 ## System clocks
 ########################################################
-set_property -dict {PACKAGE_PIN AD12 IOSTANDARD LVDS} [get_ports clk100_p]
-set_property -dict {PACKAGE_PIN AD11 IOSTANDARD LVDS} [get_ports clk100_n]
+set_property -dict {PACKAGE_PIN AD12 IOSTANDARD LVDS} [get_ports clk200_p]
+set_property -dict {PACKAGE_PIN AD11 IOSTANDARD LVDS} [get_ports clk200_n]
 
 
 ########################################################
@@ -37,6 +37,7 @@ set_property PACKAGE_PIN AB24 [get_ports {hdmi_tx_p[2]}]
 set_property PACKAGE_PIN AC25 [get_ports {hdmi_tx_n[2]}]
 set_property IOSTANDARD TMDS_33 [get_ports {hdmi_tx_p[2]}]
 
+create_clock -period 5.000 -name tc_clk100_p -waveform {0.000 2.500} [get_ports clk200_p]
+create_clock -period 5.000 -name tc_clk100_n -waveform {2.500 5.000} [get_ports clk200_n]
 
-create_clock -period 5.000 -name tc_clk100_p -waveform {0.000 2.500} [get_ports clk100_p]
-create_clock -period 5.000 -name tc_clk100_n -waveform {2.500 5.000} [get_ports clk100_n]
+#set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets mmcm_clk_in]
