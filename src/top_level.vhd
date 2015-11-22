@@ -70,6 +70,15 @@ entity top_level is
         btnR      : in STD_LOGIC;
         btnC      : in STD_LOGIC;
         
+        pmod_enc_a     : in  STD_LOGIC;
+        pmod_enc_b     : in  STD_LOGIC;
+        pmod_enc_btn   : in  STD_LOGIC;
+        pmod_enc_sw    : in  STD_LOGIC;
+        pmod_adc_cs    : out STD_LOGIC;
+        pmod_adc_data0 : in  STD_LOGIC;
+        pmod_adc_data1 : in  STD_LOGIC;
+        pmod_adc_clk   : out STD_LOGIC;
+        
         hdmi_tx_rscl  : out   std_logic;
         hdmi_tx_rsda  : inout std_logic;
         hdmi_tx_hpd   : in    std_logic;
@@ -153,6 +162,16 @@ architecture Behavioral of top_level is
             btnL      : in STD_LOGIC;
             btnR      : in STD_LOGIC;
             btnC      : in STD_LOGIC;
+
+            enc_a     : in STD_LOGIC;
+            enc_b     : in STD_LOGIC;
+            enc_btn   : in STD_LOGIC;
+            enc_sw    : in STD_LOGIC;
+            adc_cs    : out STD_LOGIC;
+            adc_data0 : in STD_LOGIC;
+            adc_data1 : in STD_LOGIC;
+            adc_clk   : out STD_LOGIC;
+
             vsync     : in STD_LOGIC;
             x         : out std_logic_vector(34 downto 0);
             y         : out std_logic_vector(34 downto 0);
@@ -330,6 +349,16 @@ i_ui: user_interface  port map (
            btnL  => btnL,
            btnR  => btnR,
            btnC  => btnC,
+           
+           enc_a     => pmod_enc_a,
+           enc_b     => pmod_enc_b,
+           enc_btn   => pmod_enc_btn,
+           enc_sw    => pmod_enc_sw,
+           adc_cs    => pmod_adc_cs,
+           adc_data0 => pmod_adc_data0,
+           adc_data1 => pmod_adc_data1,
+           adc_clk   => pmod_adc_clk,
+
            vsync => vsync,
            x     => x,
            y     => y,

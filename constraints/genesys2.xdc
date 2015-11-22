@@ -15,6 +15,17 @@ set_property -dict {PACKAGE_PIN M20 IOSTANDARD LVCMOS33} [get_ports btnL]
 set_property -dict {PACKAGE_PIN C19 IOSTANDARD LVCMOS33} [get_ports btnR]
 set_property -dict {PACKAGE_PIN B19 IOSTANDARD LVCMOS33} [get_ports btnU]
 
+## JA 0 through 7
+set_property -dict {PACKAGE_PIN U28 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports pmod_enc_a]
+set_property -dict {PACKAGE_PIN U27 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports pmod_enc_b]
+set_property -dict {PACKAGE_PIN T27 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports pmod_enc_btn]
+set_property -dict {PACKAGE_PIN T26 IOSTANDARD LVCMOS33 PULLUP TRUE} [get_ports pmod_enc_sw]
+
+set_property -dict {PACKAGE_PIN T22 IOSTANDARD LVCMOS33} [get_ports pmod_adc_cs]
+set_property -dict {PACKAGE_PIN T23 IOSTANDARD LVCMOS33} [get_ports pmod_adc_data0]
+set_property -dict {PACKAGE_PIN T20 IOSTANDARD LVCMOS33} [get_ports pmod_adc_data1]
+set_property -dict {PACKAGE_PIN T21 IOSTANDARD LVCMOS33} [get_ports pmod_adc_clk]
+
 ########################################################
 ## HDMI TX
 ########################################################
