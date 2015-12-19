@@ -58,6 +58,7 @@ entity top_level is
 -------------------------------------      
         clk200_p    : in STD_LOGIC;
         clk200_n    : in STD_LOGIC;
+	fan_pwm     : out STD_LOGIC;
 -------------------------------------
 -- Nexys Video has single ended clock  
 -------------------------------------      
@@ -119,6 +120,19 @@ architecture Behavioral of top_level is
     signal vsync : std_logic := '0';
     signal field         : std_logic;
     signal interlaced    : std_logic;
+
+    component xadc_temp is
+    Port ( clk100   : in  STD_LOGIC;
+           temp_k   : out STD_LOGIC_VECTOR (8 downto 0));
+    end component;
+
+    signal temp_k   : STD_LOGIC_VECTOR (8 downto 0);
+ 
+    component fan_pwm_control is
+    Port ( clk100 : in STD_LOGIC;
+           temp_k : in STD_LOGIC_VECTOR (8 downto 0);
+           fan_pwm : out STD_LOGIC);
+    end component;
 
     component mmcm_wrapper is
         generic ( div_to_25MHz  : integer );
@@ -324,6 +338,18 @@ i_clk_gen0 : mmcm_wrapper generic map (
       clk_pixel_x5 => clk_pixel_x5
 );
 end generate;
+
+---------------------------------
+-- Logic for the Genesys 2 fan
+---------------------------------
+i_xadc_temp: xadc_temp port map (
+	clk100 => clk_pixel_x1,
+        temp_k => temp_k);
+
+i_fan_pwm: fan_pwm_control Port map (
+	clk100 => clk_pixel_x1,
+        temp_k => temp_k,
+        fan_pwm => fan_pwm);
 
 ---------------------------------------------
 -- For Nexys Video - single ended 100MHz clk
